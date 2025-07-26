@@ -75,32 +75,6 @@ async def match_resume(request: ResumeMatchRequest):
         logging.error(f"Error in match_resume: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# @app.post("/generate-interview-questions")
-# async def generate_interview_questions(request: InterviewQuestionRequest):
-#     """生成基于岗位和技能的面试问题"""
-#     try:
-#         # 1. 从知识图谱获取相关知识点
-#         knowledge = neo4j_query.get_skill_path(
-#             request.job_title,
-#             str(request.candidate_skills)
-#         )
-#
-#         # 2. 使用LLM生成问题
-#         prompt = f"""
-#         岗位: {request.job_title}
-#         候选人技能: {', '.join(request.candidate_skills)}
-#         相关知识: {knowledge}
-#
-#         生成5个技术面试问题和3个行为面试问题，按STAR法则给出理想答案要点。
-#         返回JSON格式: {{"technical_questions": [...], "behavioral_questions": [...]}}
-#         """
-#         print("提示词：",prompt)
-#         response = llm_inference.generate(prompt)
-#         print("回复：",response)
-#         return response
-#     except Exception as e:
-#         logging.error(f"Error in generate_interview_questions: {str(e)}")
-#         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/generate-interview-questions")
 async def generate_interview_questions(request: InterviewQuestionRequest):
