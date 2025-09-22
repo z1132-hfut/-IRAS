@@ -1,6 +1,12 @@
+"""
+为简历匹配功能提供知识图谱搭建和查询操作。
+"""
+
+"""
+基于知识图谱进行复杂的关联查询和智能分析
+"""
 from neo4j import GraphDatabase
 from typing import Optional, List, Dict
-
 
 class Neo4jQuery:
     def __init__(self, uri, user, password):
@@ -66,3 +72,4 @@ class Neo4jQuery:
         except Exception as e:
             print(f"Error querying job requirements: {e}")
             return []
+
