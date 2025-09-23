@@ -1,0 +1,14 @@
+# Python虚拟环境
+rag-env/
+venv/
+.env
+
+# 缓存文件
+__pycache__/
+*.pyc
+*.pyo
+
+# 模型文件（如果存在）
+models/
+*.safetensors
+*.bin
