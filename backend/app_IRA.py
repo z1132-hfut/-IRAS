@@ -1,9 +1,25 @@
 """
 后端入口程序
-云服务器地址：ssh root@8.154.34.54
+云服务器地址：ssh root@8.149.138.59
 FastAPI运行：
-命令行：uvicorn IntelligentRecruitmentAssistant.backend.app_IRA:app --reload
+命令行：uvicorn backend.app_IRA:app --reload
 进入网页：http://127.0.0.1:8000/docs
+"""
+
+"""
+cd /root/-IRAS
+source rag-env/bin/activate
+
+python -c "
+import os
+os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
+from huggingface_hub import snapshot_download
+snapshot_download(
+    repo_id='Qwen/Qwen2.5-3B-Instruct',
+    local_dir='./models/Qwen2.5-3B-Instruct',
+    local_dir_use_symlinks=False
+)
+"
 """
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, Form
@@ -37,7 +53,7 @@ app = FastAPI(
 
 # 初始化组件：
 # rag_system = RAGSystem()
-llm_inference_Q1 = LLMInferenceQ1(r"H:\models\Qwen2.5-3B-Instruct")
+llm_inference_Q1 = LLMInferenceQ1("models/Qwen/Qwen2.5-3B-Instruct",)
 print("Q1模型加载中...")
 llm_inference_Q1.load_model()   # 加载模型，最耗时
 print("Q1模型加载完成")
