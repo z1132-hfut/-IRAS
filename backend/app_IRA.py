@@ -53,7 +53,7 @@ app = FastAPI(
 
 # 初始化组件：
 # rag_system = RAGSystem()
-llm_inference_Q1 = LLMInferenceQ1("models/Qwen/Qwen2.5-3B-Instruct",)
+llm_inference_Q1 = LLMInferenceQ1()
 print("Q1模型加载中...")
 llm_inference_Q1.load_model()   # 加载模型，最耗时
 print("Q1模型加载完成")
