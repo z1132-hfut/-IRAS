@@ -13,7 +13,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # 确保不使用GPU
 
 
 class LLMInferenceQ1:
-    def __init__(self, model_path: str = os.getenv('MODEL_PATH', './models/Qwen2.5-3B-Instruct')):
+    def __init__(self, model_path: str = "/root/models/Qwen2.5-3B-Instruct"):
         """
         初始化模型
         :param model_path: 模型路径
