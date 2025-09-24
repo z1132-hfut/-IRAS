@@ -70,9 +70,13 @@ class FilterConditions(BaseModel):
 async def match_resumes(
         files: List[UploadFile] = File(..., description="批量上传的PDF简历文件"),
         job_description: str = Form(..., description="职位描述文本"),
+        company_description: str = Form(..., description="公司描述文本"),
+        job_name: str = Form(..., description="职位名称"),
         filter_conditions: str = Form(..., description="JSON格式的字符串")
 ):
     """
+    :param company_description:
+    :param job_name:
     :param files:上传的PDF文件列表
     :param job_description:岗位需求描述
     :param filter_conditions:自定义条件
@@ -94,16 +98,22 @@ async def match_resumes(
     #                "校内经历，个人介绍，其他内容，备注/特殊需求）："+str(filter_conditions))
 
     user_prompt = (
-        "你是一位专业的校招简历评分专家，需要为互联网公司的AI技术岗位进行简历初筛。"
+        "你是一位专业的简历评分专家，需要为公司的招聘岗位进行简历初筛。"
 
         "## 评分任务\n"
         "请基于以下信息对简历进行综合评估，重点考察候选人与目标岗位的匹配度。\n"
 
         "## 评分规则\n"
-        "- **总分范围**：0-10分，7分以上为推荐面试，5-7分可备选，5分以下不推荐\n"
+        "- **总分范围**：0-100分，80分以上为推荐面试，60-80分可备选，60分以下不推荐\n"
         "- **评分依据**：结合岗位需求匹配度 + 权重配置进行加权评估\n"
         "- **特殊要求**：必须检查特殊要求项，如不满足应显著影响分数\n"
-
+        
+        "## 岗位名称\n"
+        +str(job_name)+"\n"
+                       
+        "## 公司相关信息\n"
+        +str(company_description)+"\n"               
+                              
         "## 岗位需求\n"
         +str(job_description)+"\n"
 
@@ -111,13 +121,13 @@ async def match_resumes(
         +str(filter_conditions)+"\n"
 
         "## 评估要点\n"
-        "1. **技术匹配度**：编程语言、框架、工具是否满足岗位要求\n"
-        "2. **项目相关性**：项目经验是否与AI应用开发相关\n"
-        "3. **经验完整性**：实习/项目/比赛经历的质量和深度\n"
+        "1. **技能匹配度**：面试者拥有的技能是否满足岗位要求\n"
+        "2. **经历相关性**：面试者的经历（实习，项目等）是否与岗位需求相关\n"
+        "3. **其他内容质量**：面试者其他经历（校内外社会实践，竞赛获奖，证书，论文等等）的质量和深度\n"
         "4. **特殊要求**：是否满足备注中的硬性条件\n"
 
         "## 输出格式（必须严格遵循）\n"
-        "分数：x.x（精确到小数点后1位）\n"
+        "分数：x.x（精确到小数点后2位）\n"
         "原因：\n"
         "- 匹配优势：列出符合岗位要求的亮点（至少3项）\n"
         "- 不足之处：列出缺失或不符合的关键点（至少2项）\n"
@@ -157,11 +167,16 @@ async def match_resumes(
 
 # 更好地评估基本信息，掌握技术，教育背景，实习经历，项目经历，校内/社会实践经历，获奖/证书信息，自我评价，其他信息
 
-    # rag_system接入知识库——返回：大学等级信息，实习公司信息，实习岗位信息，行业术语信息（技术对比）
+    # 知识库包含内容：
+    # 1、不同岗位，不同类型企业的招聘偏好。
+    # 2、（联网搜索）大学背景信息，实习公司背景信息。
+    # 3、大学经历，竞赛经历名称和含金量等信息。
+
+    # 知识图谱包含内容：岗位-能力 画像。考虑不同工作阶段。
+
+
     # prompts.append("知识库检索内容：")
 
-
-    # neo4j_query接入知识图谱
     # prompts.append("知识图谱检索内容：")
 
 
