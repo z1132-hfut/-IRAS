@@ -21,7 +21,8 @@ class KnowledgeGraphBuilder:
             connection_timeout=30,
             max_connection_pool_size=50
         )
-        self.data_file = data_file
+        # self.data_file = data_file
+        self.data_file = "/root/-IRAS/data/data_knowledge_graph/jobInfo.csv"
         self._init_jieba()
 
     def _init_jieba(self):
@@ -151,6 +152,8 @@ class KnowledgeGraphBuilder:
             # 使用传入的文件路径或默认路径
             if data_file:
                 self.data_file = data_file
+            else:
+                self.data_file="/root/-IRAS/data/data_knowledge_graph/jobInfo.csv"
 
             if not os.path.exists(self.data_file):
                 raise FileNotFoundError(f"数据文件不存在: {self.data_file}")
@@ -516,8 +519,8 @@ def main():
     # 获取当前文件所在目录的父目录（项目根目录）
     CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
     PROJECT_ROOT = os.path.dirname(CURRENT_DIR)  # 项目根目录
-    DATA_FILE = os.path.join(PROJECT_ROOT, "data_knowledge_graph", "jobInfo.csv")
-
+    # DATA_FILE = os.path.join(PROJECT_ROOT, "data_knowledge_graph", "jobInfo.csv")
+    DATA_FILE = "/root/-IRAS/data/data_knowledge_graph/jobInfo.csv"
     print(f"数据文件路径: {DATA_FILE}")
 
     # 检查文件是否存在
