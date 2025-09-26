@@ -58,7 +58,7 @@ neo4j_query = JobCompetencyQuery("neo4j+s://ed7b8137.databases.neo4j.io", "neo4j
 
 neo4j_query_kg = KnowledgeGraphBuilder("neo4j+s://ed7b8137.databases.neo4j.io", "neo4j",
                          "JL8jiUY_gHvv9T2jVveGVPWpU6Od3IG7FumADh4vp2k")
-# neo4j_query_kg.build_knowledge_graph()
+neo4j_query_kg.build_knowledge_graph()
 
 
 class FilterConditions(BaseModel):

@@ -172,10 +172,10 @@ class KnowledgeGraphBuilder:
                 node_count = result.single()["node_count"]
 
                 if node_count > 0:
-                    # print("知识图谱中已有数据，不再重新构建")
-                    # return
-                    session.run("MATCH (n) DETACH DELETE n")
-                    print(f"图谱中已有{node_count}个节点，清空重建...")
+                    print("知识图谱中已有数据，不再重新构建")
+                    return
+                    # session.run("MATCH (n) DETACH DELETE n")
+                    # print(f"图谱中已有{node_count}个节点，清空重建...")
 
                 # 创建约束
                 constraints = [
@@ -545,16 +545,16 @@ def main():
     try:
         # 构建知识图谱
         builder = KnowledgeGraphBuilder(NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD, DATA_FILE)
-        builder.build_knowledge_graph()
+        # builder.build_knowledge_graph()
 
         # 打印知识图谱内容
-        builder.print_knowledge_graph()
+        # builder.print_knowledge_graph()
 
         # 查询测试
         query_tool = JobCompetencyQuery(NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD)
 
         # 测试查询几个岗位
-        test_jobs = ["数据分析师", "运维工程师", "销售岗"]
+        test_jobs = ["AI应用开发工程师", "后端开发", "英语教师"]
 
         for job in test_jobs:
             print(f"\n=== {job} 能力要求查询结果 ===")
