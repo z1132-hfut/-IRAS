@@ -55,6 +55,8 @@ rag = KnowledgeSystem()
 # Neo4j Aura云托管，无需本地下载：
 neo4j_query = JobCompetencyQuery("neo4j+s://9f26c0e6.databases.neo4j.io", "neo4j",
                          "Fe-28Cvu4lm-WX_03PI5bZcN8jilzWPcDxlgNxfPODo")
+neo4j_query.build_knowledge_graph()
+
 
 class FilterConditions(BaseModel):
     college_level: Optional[float] = 0.6
