@@ -19,19 +19,19 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from typing import List, Dict, Any
 import fitz  # PyMuPDF
 
-# from IntelligentRecruitmentAssistant.llm.funetuning_Q1 import LLMInferenceQ1
-# from IntelligentRecruitmentAssistant.llm.funetuning_Q2 import LLMInferenceQ2
-# from IntelligentRecruitmentAssistant.llm.data_clean_Q1 import DataCleanQ1
-# from IntelligentRecruitmentAssistant.llm.data_clean_Q2 import DataCleanQ2
-# from IntelligentRecruitmentAssistant.rag.KnowledgeSystem import KnowledgeSystem
-# from IntelligentRecruitmentAssistant.knowledge_graph.kg_Q1 import JobCompetencyQuery
+from IntelligentRecruitmentAssistant.llm.funetuning_Q1 import LLMInferenceQ1
+from IntelligentRecruitmentAssistant.llm.funetuning_Q2 import LLMInferenceQ2
+from IntelligentRecruitmentAssistant.llm.data_clean_Q1 import DataCleanQ1
+from IntelligentRecruitmentAssistant.llm.data_clean_Q2 import DataCleanQ2
+from IntelligentRecruitmentAssistant.rag.KnowledgeSystem import KnowledgeSystem
+from IntelligentRecruitmentAssistant.knowledge_graph.kg_Q1 import KnowledgeGraphBuilder,JobCompetencyQuery
 
-from llm.funetuning_Q1 import LLMInferenceQ1
-from llm.funetuning_Q2 import LLMInferenceQ2
-from llm.data_clean_Q1 import DataCleanQ1
-from llm.data_clean_Q2 import DataCleanQ2
-from rag.KnowledgeSystem import KnowledgeSystem
-from knowledge_graph.kg_Q1 import JobCompetencyQuery
+# from llm.funetuning_Q1 import LLMInferenceQ1
+# from llm.funetuning_Q2 import LLMInferenceQ2
+# from llm.data_clean_Q1 import DataCleanQ1
+# from llm.data_clean_Q2 import DataCleanQ2
+# from rag.KnowledgeSystem import KnowledgeSystem
+# from knowledge_graph.kg_Q1 import JobCompetencyQuery
 
 import logging
 import os
@@ -53,9 +53,12 @@ data_clean_Q1 = DataCleanQ1()
 data_clean_Q2 = DataCleanQ2()
 rag = KnowledgeSystem()
 # Neo4j Aura云托管，无需本地下载：
-neo4j_query = JobCompetencyQuery("neo4j+s://9f26c0e6.databases.neo4j.io", "neo4j",
-                         "Fe-28Cvu4lm-WX_03PI5bZcN8jilzWPcDxlgNxfPODo")
-neo4j_query.build_knowledge_graph()
+neo4j_query = JobCompetencyQuery("neo4j+s://ed7b8137.databases.neo4j.io", "neo4j",
+                         "JL8jiUY_gHvv9T2jVveGVPWpU6Od3IG7FumADh4vp2k")
+
+neo4j_query_kg = KnowledgeGraphBuilder("neo4j+s://ed7b8137.databases.neo4j.io", "neo4j",
+                         "JL8jiUY_gHvv9T2jVveGVPWpU6Od3IG7FumADh4vp2k")
+neo4j_query_kg.build_knowledge_graph()
 
 
 class FilterConditions(BaseModel):
