@@ -52,6 +52,7 @@ llm_inference_Q2 = LLMInferenceQ2()
 data_clean_Q1 = DataCleanQ1()
 data_clean_Q2 = DataCleanQ2()
 rag = KnowledgeSystem()
+rag.build_knowledge_base()  # 不强制重建
 # Neo4j Aura云托管，无需本地下载：
 neo4j_query = JobCompetencyQuery("neo4j+s://ed7b8137.databases.neo4j.io", "neo4j",
                          "JL8jiUY_gHvv9T2jVveGVPWpU6Od3IG7FumADh4vp2k")
