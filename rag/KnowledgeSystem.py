@@ -31,8 +31,10 @@ class KnowledgeSystem:
         """初始化文本嵌入模型"""
         print("正在加载嵌入模型...")
         self.embeddings = HuggingFaceEmbeddings(
-            model_name=r"H:\models\bge-small-zh",
-            model_kwargs={'device': 'cpu'}
+            # model_name=r"H:\models\bge-small-zh",
+            model_name="/root/models/bge-small-zh",
+            # model_kwargs={'device': 'cpu'},
+            model_kwargs={'device': 'cuda:0'},
         )
         print("嵌入模型加载完成！")
 
