@@ -19,19 +19,19 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from typing import List, Dict, Any
 import fitz  # PyMuPDF
 
-from IntelligentRecruitmentAssistant.llm.funetuning_Q1 import LLMInferenceQ1
-from IntelligentRecruitmentAssistant.llm.funetuning_Q2 import LLMInferenceQ2
-from IntelligentRecruitmentAssistant.llm.data_clean_Q1 import DataCleanQ1
-from IntelligentRecruitmentAssistant.llm.data_clean_Q2 import DataCleanQ2
-from IntelligentRecruitmentAssistant.rag.KnowledgeSystem import KnowledgeSystem
-from IntelligentRecruitmentAssistant.knowledge_graph.kg_Q1 import KnowledgeGraphBuilder,JobCompetencyQuery
+# from IntelligentRecruitmentAssistant.llm.funetuning_Q1 import LLMInferenceQ1
+# from IntelligentRecruitmentAssistant.llm.funetuning_Q2 import LLMInferenceQ2
+# from IntelligentRecruitmentAssistant.llm.data_clean_Q1 import DataCleanQ1
+# from IntelligentRecruitmentAssistant.llm.data_clean_Q2 import DataCleanQ2
+# from IntelligentRecruitmentAssistant.rag.KnowledgeSystem import KnowledgeSystem
+# from IntelligentRecruitmentAssistant.knowledge_graph.kg_Q1 import KnowledgeGraphBuilder,JobCompetencyQuery
 
-# from llm.funetuning_Q1 import LLMInferenceQ1
-# from llm.funetuning_Q2 import LLMInferenceQ2
-# from llm.data_clean_Q1 import DataCleanQ1
-# from llm.data_clean_Q2 import DataCleanQ2
-# from rag.KnowledgeSystem import KnowledgeSystem
-# from knowledge_graph.kg_Q1 import JobCompetencyQuery
+from llm.funetuning_Q1 import LLMInferenceQ1
+from llm.funetuning_Q2 import LLMInferenceQ2
+from llm.data_clean_Q1 import DataCleanQ1
+from llm.data_clean_Q2 import DataCleanQ2
+from rag.KnowledgeSystem import KnowledgeSystem
+from knowledge_graph.kg_Q1 import KnowledgeGraphBuilder,JobCompetencyQuery
 
 import logging
 import os
