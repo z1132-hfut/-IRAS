@@ -23,15 +23,15 @@ import fitz  # PyMuPDF
 # from IntelligentRecruitmentAssistant.llm.funetuning_Q2 import LLMInferenceQ2
 # from IntelligentRecruitmentAssistant.llm.data_clean_Q1 import DataCleanQ1
 # from IntelligentRecruitmentAssistant.llm.data_clean_Q2 import DataCleanQ2
-# from IntelligentRecruitmentAssistant.rag.KnowledgeSystem import RAGSystem
-# from IntelligentRecruitmentAssistant.knowledge_graph.kg_Q1 import Neo4jQuery
+# from IntelligentRecruitmentAssistant.rag.KnowledgeSystem import KnowledgeSystem
+# from IntelligentRecruitmentAssistant.knowledge_graph.kg_Q1 import JobCompetencyQuery
 
 from llm.funetuning_Q1 import LLMInferenceQ1
 from llm.funetuning_Q2 import LLMInferenceQ2
 from llm.data_clean_Q1 import DataCleanQ1
 from llm.data_clean_Q2 import DataCleanQ2
-from rag.KnowledgeSystem import RAGSystem
-from knowledge_graph.kg_Q1 import Neo4jQuery
+from rag.KnowledgeSystem import KnowledgeSystem
+from knowledge_graph.kg_Q1 import JobCompetencyQuery
 
 import logging
 import os
@@ -51,9 +51,9 @@ print("Q1模型加载完成")
 llm_inference_Q2 = LLMInferenceQ2()
 data_clean_Q1 = DataCleanQ1()
 data_clean_Q2 = DataCleanQ2()
-rag = RAGSystem()
+rag = KnowledgeSystem()
 # Neo4j Aura云托管，无需本地下载：
-neo4j_query = Neo4jQuery("neo4j+s://9f26c0e6.databases.neo4j.io", "neo4j",
+neo4j_query = JobCompetencyQuery("neo4j+s://9f26c0e6.databases.neo4j.io", "neo4j",
                          "Fe-28Cvu4lm-WX_03PI5bZcN8jilzWPcDxlgNxfPODo")
 
 class FilterConditions(BaseModel):
@@ -69,14 +69,20 @@ class FilterConditions(BaseModel):
 @app.post("/match-resume")
 async def match_resumes(
         files: List[UploadFile] = File(..., description="批量上传的PDF简历文件"),
+        company_kind: str = Form(..., description="公司类型"),
+        job_kind: str = Form(..., description="岗位类型"),
+        trade_kind: str = Form(..., description="行业类型"),
+        job_name: str = Form(..., description="职位名称"),
         job_description: str = Form(..., description="职位描述文本"),
         company_description: str = Form(..., description="公司描述文本"),
-        job_name: str = Form(..., description="职位名称"),
         filter_conditions: str = Form(..., description="JSON格式的字符串")
 ):
     """
-    :param company_description:
-    :param job_name:
+    :param trade_kind: 行业类型
+    :param job_kind: 岗位类型
+    :param company_kind: 公司类型
+    :param company_description:公司描述
+    :param job_name:职位名称
     :param files:上传的PDF文件列表
     :param job_description:岗位需求描述
     :param filter_conditions:自定义条件
@@ -92,10 +98,7 @@ async def match_resumes(
 
     prompts = []
 
-    # user_prompt = ("你是一个专业的简历评分助手，你的职责是帮助互联网公司的校招简历筛选。请根据给出的以下信息对简历进行打分。"
-    #                "请严格按照以下格式回复：分数：xxx（对简历的打分。0-10分）。原因：xxx（打分原因）。"
-    #                "岗位招聘需求：" + str(job_description) +"。信息权重和备注（分别为大学信息，实习经历，项目经历，"
-    #                "校内经历，个人介绍，其他内容，备注/特殊需求）："+str(filter_conditions))
+    kg_info = rag.batch_search([company_kind,job_kind,trade_kind])
 
     user_prompt = (
         "你是一位专业的简历评分专家，需要为公司的招聘岗位进行简历初筛。"
@@ -104,10 +107,19 @@ async def match_resumes(
         "请基于以下信息对简历进行综合评估，重点考察候选人与目标岗位的匹配度。\n"
 
         "## 评分规则\n"
-        "- **总分范围**：0-100分，80分以上为推荐面试，60-80分可备选，60分以下不推荐\n"
+        "- **总分范围**：0-100分，75分以上为推荐面试，55-75分可备选，55分以下不推荐\n"
         "- **评分依据**：结合岗位需求匹配度 + 权重配置进行加权评估\n"
         "- **特殊要求**：必须检查特殊要求项，如不满足应显著影响分数\n"
         
+        "## 行业类型及其招聘偏好：\n"
+        +str(kg_info[0])+"\n"
+                       
+        "## 公司类型及其招聘偏好：\n"
+        +str(kg_info[2])+"\n"
+        
+        "## 岗位类型及其招聘偏好：\n"
+        +str(kg_info[1])+"\n"
+                       
         "## 岗位名称\n"
         +str(job_name)+"\n"
                        
@@ -116,6 +128,9 @@ async def match_resumes(
                               
         "## 岗位需求\n"
         +str(job_description)+"\n"
+                              
+        "## 岗位能力画像：\n"
+        +str(neo4j_query.get_job_requirements(job_name))+"\n"                      
 
         "## 权重配置（分别为大学信息，实习经历，项目经历，校内经历，个人介绍，其他内容，备注/特殊需求。从0-1，权重越接近1越重要）\n"
         +str(filter_conditions)+"\n"
