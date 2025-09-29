@@ -146,6 +146,7 @@ class KnowledgeGraphBuilder:
 
         return df_clean
 
+    # 知识图谱构建主函数
     def build_knowledge_graph(self, data_file: str = None):
         """从jobInfo.csv构建知识图谱"""
         try:
@@ -471,6 +472,7 @@ class JobCompetencyQuery:
             }
         }
 
+    # 查询主函数
     def get_job_requirements(self, job_title: str) -> Dict:
         """传入岗位名称，返回需要的能力描述（和学历，工作经验对应）"""
         profile = self.get_job_competency_profile(job_title)

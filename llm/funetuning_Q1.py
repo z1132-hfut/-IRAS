@@ -1,11 +1,16 @@
 """
 针对简历匹配功能对本地的Qwen2.5-3B-Instruct进行微调。
 优化版本：模型只加载一次，支持多次提问
+加入QLoRA微调功能
 """
-from transformers import AutoModelForCausalLM, AutoTokenizer, GenerationConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer, GenerationConfig, TrainingArguments
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 import torch
 import os
+import json
 from typing import List, Optional
+from datasets import Dataset
+from trl import SFTTrainer
 
 
 class LLMInferenceQ1:
@@ -207,6 +212,141 @@ class LLMInferenceQ1:
             torch.cuda.empty_cache()
             print("GPU缓存已清理")
 
+    def load_training_data(self, data_path: str):
+        """
+        加载训练数据
+        :param data_path: 数据文件路径
+        """
+        try:
+            with open(data_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            print(f"成功加载 {len(data)} 条训练数据")
+            return data
+        except Exception as e:
+            print(f"加载训练数据失败: {e}")
+            return None
+
+    def prepare_data_for_training(self, data, test_size=0.1):
+        """
+        准备训练数据
+        :param data: 原始数据
+        :param test_size: 测试集比例
+        """
+        # 构建训练格式
+        formatted_data = []
+        for item in data:
+            # 提取system和user内容
+            content = item.get("system", "") + item.get("user", "")
+            assistant_content = item.get("assistant", "")
+
+            # 构建训练文本
+            text = f"<|im_start|>system\n{content}<|im_end|>\n<|im_start|>assistant\n{assistant_content}<|im_end|>"
+            formatted_data.append({"text": text})
+
+        # 划分训练集和测试集
+        split_idx = int(len(formatted_data) * (1 - test_size))
+        train_data = formatted_data[:split_idx]
+        test_data = formatted_data[split_idx:]
+
+        print(f"训练集: {len(train_data)} 条, 测试集: {len(test_data)} 条")
+        return train_data, test_data
+
+    def setup_lora_config(self):
+        """
+        设置QLoRA配置
+        """
+        lora_config = LoraConfig(
+            r=16,  # LoRA秩
+            lora_alpha=32,  # LoRA alpha
+            target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+            lora_dropout=0.05,
+            bias="none",
+            task_type="CAUSAL_LM",
+        )
+        return lora_config
+
+    def finetune_with_qlora(self,
+                            data_path: str = "IntelligentRecruitmentAssistant/data/data_model_train/QLora_data.txt",
+                            output_dir: str = "IntelligentRecruitmentAssistant/llm/finetuned_model",
+                            num_train_epochs: int = 3,
+                            per_device_train_batch_size: int = 1,
+                            gradient_accumulation_steps: int = 4,
+                            learning_rate: float = 2e-4,
+                            max_seq_length: int = 2048):
+        """
+        使用QLoRA进行模型微调
+        """
+        print("开始QLoRA微调...")
+
+        # 加载训练数据
+        raw_data = self.load_training_data(data_path)
+        if raw_data is None:
+            print("无法加载训练数据，终止微调")
+            return
+
+        # 准备数据
+        train_data, eval_data = self.prepare_data_for_training(raw_data)
+
+        # 确保模型已加载
+        if not self.is_loaded:
+            self.load_model()
+
+        # 准备模型用于训练
+        self.model = prepare_model_for_kbit_training(self.model)
+
+        # 设置LoRA配置
+        peft_config = self.setup_lora_config()
+
+        # 应用LoRA到模型
+        self.model = get_peft_model(self.model, peft_config)
+        self.model.print_trainable_parameters()
+
+        # 设置训练参数
+        training_args = TrainingArguments(
+            output_dir=output_dir,
+            num_train_epochs=num_train_epochs,
+            per_device_train_batch_size=per_device_train_batch_size,
+            gradient_accumulation_steps=gradient_accumulation_steps,
+            learning_rate=learning_rate,
+            logging_steps=10,
+            eval_steps=50,
+            save_steps=100,
+            evaluation_strategy="steps",
+            save_strategy="steps",
+            load_best_model_at_end=True,
+            report_to=None,  # 禁用wandb等记录
+            remove_unused_columns=False,
+            warmup_ratio=0.1,
+            lr_scheduler_type="cosine",
+            optim="adamw_torch",
+            fp16=True if self.device.type == "cuda" else False,
+            dataloader_pin_memory=False,
+        )
+
+        # 创建训练器
+        trainer = SFTTrainer(
+            model=self.model,
+            args=training_args,
+            train_dataset=Dataset.from_list(train_data),
+            eval_dataset=Dataset.from_list(eval_data) if eval_data else None,
+            dataset_text_field="text",
+            max_seq_length=max_seq_length,
+            tokenizer=self.tokenizer,
+            packing=False,
+        )
+
+        # 开始训练
+        print("开始训练...")
+        trainer.train()
+
+        # 保存模型
+        trainer.save_model()
+        print(f"微调完成，模型保存到: {output_dir}")
+
+        # 清理训练状态，恢复推理模式
+        self.model = self.model.merge_and_unload()
+        torch.cuda.empty_cache()
+
 
 # 使用示例
 if __name__ == "__main__":
@@ -215,6 +355,13 @@ if __name__ == "__main__":
 
     # 显示设备信息
     print("设备信息:", llm.get_device_info())
+
+    # 微调模型（取消注释以运行微调）
+    llm.finetune_with_qlora(
+        data_path="IntelligentRecruitmentAssistant/data/data_model_train/QLora_data.txt",
+        output_dir="IntelligentRecruitmentAssistant/llm/finetuned_model",
+        num_train_epochs=3
+    )
 
     # 第一次使用时会自动加载模型
     prompts = [

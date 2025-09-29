@@ -1,7 +1,6 @@
 """
 负责从RAG中检索相关信息并返回，辅助模型判断
 """
-
 import os
 import re
 import pandas as pd
@@ -326,6 +325,7 @@ class KnowledgeSystem:
 
         return split_docs
 
+    # 构建主函数
     def build_knowledge_base(self, force_rebuild: bool = False):
         """构建知识库"""
         if not force_rebuild and os.path.exists(self.vector_store_path):
@@ -353,6 +353,7 @@ class KnowledgeSystem:
         self.vector_store.save_local(self.vector_store_path)
         print(f"知识库构建完成！已保存到 {self.vector_store_path}")
 
+    # 搜索主函数
     def batch_search(self, search_terms: List[str], top_k: int = 3) -> List[str]:
         """批量搜索相关信息"""
         if self.vector_store is None:
@@ -482,7 +483,8 @@ class KnowledgeSystem:
 def main():
     """测试函数"""
     kb = KnowledgeSystem()
-    kb.build_knowledge_base(force_rebuild=True)  # 强制重建以确保数据正确解析
+    # kb.build_knowledge_base(force_rebuild=True)  # 强制重建以确保数据正确解析
+    kb.build_knowledge_base()
 
     print("\n" + "=" * 50)
     print("智能招聘知识库系统")
@@ -498,31 +500,13 @@ def main():
 
     results = kb.batch_search(test_terms)
 
-    for i, result in enumerate(results):
-        print(f"\n{'-' * 30}")
-        print(f"结果 {i + 1}:")
-        print(result)
+    print(results[0])
 
-    # 交互式搜索
-    while True:
-        print("\n请输入搜索词（多个词用逗号分隔，输入'quit'退出）：")
-        user_input = input().strip()
+    # for i, result in enumerate(results):
+    #     print(f"\n{'-' * 30}")
+    #     print(f"结果 {i + 1}:")
+    #     print(result)
 
-        if user_input.lower() in ['quit', 'exit', '退出']:
-            print("感谢使用！")
-            break
-
-        if not user_input:
-            continue
-
-        search_terms = [term.strip() for term in user_input.split(',')]
-        results = kb.batch_search(search_terms)
-
-        print("\n" + "=" * 50)
-        for i, result in enumerate(results):
-            print(f"\n搜索结果 {i + 1}:")
-            print(result)
-            print("-" * 30)
 
 
 if __name__ == "__main__":
