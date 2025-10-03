@@ -917,9 +917,6 @@ class LLMInferenceQ1:
             train_dataset=Dataset.from_list(train_data),
             eval_dataset=Dataset.from_list(eval_data) if eval_data else None,
             formatting_func=formatting_func,
-            max_seq_length=max_seq_length,
-            tokenizer=self.tokenizer,
-            packing=False,
         )
 
         # 开始训练
@@ -994,9 +991,6 @@ class LLMInferenceQ1:
             args=training_args,
             train_dataset=Dataset.from_list(train_data),
             formatting_func=formatting_func,
-            max_seq_length=512,
-            tokenizer=self.tokenizer,
-            packing=False,
         )
 
         # 开始训练
