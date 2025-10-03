@@ -400,7 +400,29 @@ class LLMInferenceQ1:
             dataloader_pin_memory=False,
         )
 
-        # ... 后面的代码保持不变 ...
+        # 创建训练器
+        trainer = SFTTrainer(
+            model=self.model,
+            args=training_args,
+            train_dataset=Dataset.from_list(train_data),
+            eval_dataset=Dataset.from_list(eval_data) if eval_data else None,
+            dataset_text_field="text",
+            max_seq_length=max_seq_length,
+            tokenizer=self.tokenizer,
+            packing=False,
+        )
+
+        # 开始训练
+        print("开始训练...")
+        trainer.train()
+
+        # 保存模型
+        trainer.save_model()
+        print(f"微调完成，模型保存到: {output_dir}")
+
+        # 清理训练状态，恢复推理模式
+        self.model = self.model.merge_and_unload()
+        torch.cuda.empty_cache()
 
 
 # 使用示例
