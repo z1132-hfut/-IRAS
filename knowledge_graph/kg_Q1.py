@@ -173,10 +173,10 @@ class KnowledgeGraphBuilder:
                 node_count = result.single()["node_count"]
 
                 if node_count > 0:
-                    # print("知识图谱中已有数据，不再重新构建")
-                    # return
-                    session.run("MATCH (n) DETACH DELETE n")
-                    print(f"图谱中已有{node_count}个节点，清空重建...")
+                    print("知识图谱中已有数据，不再重新构建")
+                    return
+                    # session.run("MATCH (n) DETACH DELETE n")
+                    # print(f"图谱中已有{node_count}个节点，清空重建...")
 
                 # 创建约束
                 constraints = [
