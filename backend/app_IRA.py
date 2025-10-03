@@ -49,7 +49,7 @@ print("Q1模型加载中...")
 llm_inference_Q1_uf.load_model()   # 加载模型，耗时
 print("Q1模型微调中...")
 llm_inference_Q1_uf.finetune_with_qlora(
-        data_path="/root/IntelligentRecruitmentAssistant/data/data_model_train/QLora_data.txt",
+        data_path="/root/-IRAS/data/data_model_train/QLora_data.txt",
         output_dir="/root/models/finetuned_model",
         num_train_epochs=3
     )
