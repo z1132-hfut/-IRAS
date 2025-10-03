@@ -266,7 +266,7 @@ class LLMInferenceQ1:
         return lora_config
 
     def finetune_with_qlora(self,
-                            data_path: str = "/root/IntelligentRecruitmentAssistant/data/data_model_train/QLora_data.txt",
+                            data_path: str = "/root/-IRAS/data/data_model_train/QLora_data.txt",
                             output_dir: str = "/root/models/finetuned_model",
                             num_train_epochs: int = 3,
                             per_device_train_batch_size: int = 1,
