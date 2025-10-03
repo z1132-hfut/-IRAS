@@ -44,10 +44,20 @@ app = FastAPI(
 
 # 初始化组件：
 # rag_system = RAGSystem()
-llm_inference_Q1 = LLMInferenceQ1()
+llm_inference_Q1_uf = LLMInferenceQ1()
 print("Q1模型加载中...")
-llm_inference_Q1.load_model()   # 加载模型，最耗时
-print("Q1模型加载完成")
+llm_inference_Q1_uf.load_model()   # 加载模型，耗时
+print("Q1模型微调中...")
+llm_inference_Q1_uf.finetune_with_qlora(
+        data_path="/root/IntelligentRecruitmentAssistant/data/data_model_train/QLora_data.txt",
+        output_dir="/root/models/finetuned_model",
+        num_train_epochs=3
+    )
+print("Q1模型微调完成。正在加载微调后的模型")
+llm_inference_Q1 = LLMInferenceQ1("/root/models/finetuned_model")
+llm_inference_Q1.load_model()
+print("微调后模型加载完成")
+
 llm_inference_Q2 = LLMInferenceQ2()
 data_clean_Q1 = DataCleanQ1()
 # data_clean_Q2 = DataCleanQ2()
