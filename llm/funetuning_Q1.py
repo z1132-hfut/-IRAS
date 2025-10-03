@@ -265,16 +265,110 @@ class LLMInferenceQ1:
         )
         return lora_config
 
+    # def finetune_with_qlora(self,
+    #                         data_path: str = "/root/-IRAS/data/data_model_train/QLora_data.txt",
+    #                         output_dir: str = "/root/models/finetuned_model",
+    #                         num_train_epochs: int = 3,
+    #                         per_device_train_batch_size: int = 1,
+    #                         gradient_accumulation_steps: int = 4,
+    #                         learning_rate: float = 2e-4,
+    #                         max_seq_length: int = 2048):
+    #     """
+    #     使用QLoRA进行模型微调
+    #     """
+    #     print("开始QLoRA微调...")
+    #
+    #     # 加载训练数据
+    #     raw_data = self.load_training_data(data_path)
+    #     if raw_data is None:
+    #         print("无法加载训练数据，终止微调")
+    #         return
+    #
+    #     # 准备数据
+    #     train_data, eval_data = self.prepare_data_for_training(raw_data)
+    #
+    #     # 确保模型已加载
+    #     if not self.is_loaded:
+    #         self.load_model()
+    #
+    #     # 准备模型用于训练
+    #     self.model = prepare_model_for_kbit_training(self.model)
+    #
+    #     # 设置LoRA配置
+    #     peft_config = self.setup_lora_config()
+    #
+    #     # 应用LoRA到模型
+    #     self.model = get_peft_model(self.model, peft_config)
+    #     self.model.print_trainable_parameters()
+    #
+    #     # 设置训练参数
+    #     training_args = TrainingArguments(
+    #         output_dir=output_dir,
+    #         num_train_epochs=num_train_epochs,
+    #         per_device_train_batch_size=per_device_train_batch_size,
+    #         gradient_accumulation_steps=gradient_accumulation_steps,
+    #         learning_rate=learning_rate,
+    #         logging_steps=10,
+    #         eval_steps=50,
+    #         save_steps=100,
+    #         eval_strategy="steps",
+    #         save_strategy="steps",
+    #         load_best_model_at_end=True,
+    #         report_to=None,
+    #         remove_unused_columns=False,
+    #         warmup_ratio=0.1,
+    #         lr_scheduler_type="cosine",
+    #         optim="adamw_torch",
+    #         fp16=True if self.device.type == "cuda" else False,
+    #         dataloader_pin_memory=False,
+    #     )
+    #
+    #     # 定义格式化函数（替代 dataset_text_field）
+    #     def formatting_func(example):
+    #         return example["text"]
+    #
+    #     # 创建训练器 - 使用新版本的参数
+    #     trainer = SFTTrainer(
+    #         model=self.model,
+    #         args=training_args,
+    #         train_dataset=Dataset.from_list(train_data),
+    #         eval_dataset=Dataset.from_list(eval_data) if eval_data else None,
+    #         formatting_func=formatting_func,  # 替代 dataset_text_field
+    #     )
+    #
+    #     # 开始训练
+    #     print("开始训练...")
+    #     trainer.train()
+    #
+    #     # 保存模型和tokenizer
+    #     trainer.save_model()
+    #
+    #     # 单独保存tokenizer以确保完整性
+    #     self.tokenizer.save_pretrained(output_dir)
+    #
+    #     print(f"微调完成，模型保存到: {output_dir}")
+    #
+    #     # 检查保存的文件
+    #     if os.path.exists(output_dir):
+    #         saved_files = os.listdir(output_dir)
+    #         print(f"保存的文件列表: {saved_files}")
+    #     else:
+    #         print(f"警告: 输出目录 {output_dir} 不存在")
+    #
+    #     # 清理训练状态，恢复推理模式
+    #     self.model = self.model.merge_and_unload()
+    #     torch.cuda.empty_cache()
+
     def finetune_with_qlora(self,
                             data_path: str = "/root/-IRAS/data/data_model_train/QLora_data.txt",
                             output_dir: str = "/root/models/finetuned_model",
-                            num_train_epochs: int = 3,
-                            per_device_train_batch_size: int = 1,
-                            gradient_accumulation_steps: int = 4,
-                            learning_rate: float = 2e-4,
-                            max_seq_length: int = 2048):
+                            num_train_epochs: int = 1,  # 减少训练轮数
+                            per_device_train_batch_size: int = 1,  # 保持为1
+                            gradient_accumulation_steps: int = 1,  # 减少梯度累积
+                            learning_rate: float = 1e-4,  # 降低学习率
+                            max_seq_length: int = 1024):  # 减少序列长度
         """
-        使用QLoRA进行模型微调
+        使用QLoRA进行模型微调（内存优化版本）
         """
         print("开始QLoRA微调...")
 
@@ -287,77 +381,126 @@ class LLMInferenceQ1:
         # 准备数据
         train_data, eval_data = self.prepare_data_for_training(raw_data)
 
+        print(f"训练数据准备完成: {len(train_data)} 条训练, {len(eval_data)} 条验证")
+
         # 确保模型已加载
         if not self.is_loaded:
             self.load_model()
 
+        # 清理缓存，释放内存
+        torch.cuda.empty_cache()
+
         # 准备模型用于训练
         self.model = prepare_model_for_kbit_training(self.model)
 
-        # 设置LoRA配置
-        peft_config = self.setup_lora_config()
+        # 设置LoRA配置 - 使用更小的配置
+        lora_config = LoraConfig(
+            r=8,  # 减少秩
+            lora_alpha=16,  # 减少alpha
+            target_modules=["q_proj", "v_proj"],  # 只针对关键模块
+            lora_dropout=0.05,
+            bias="none",
+            task_type="CAUSAL_LM",
+        )
 
         # 应用LoRA到模型
-        self.model = get_peft_model(self.model, peft_config)
+        self.model = get_peft_model(self.model, lora_config)
         self.model.print_trainable_parameters()
 
-        # 设置训练参数
+        # 设置训练参数 - 内存优化
         training_args = TrainingArguments(
             output_dir=output_dir,
             num_train_epochs=num_train_epochs,
             per_device_train_batch_size=per_device_train_batch_size,
             gradient_accumulation_steps=gradient_accumulation_steps,
             learning_rate=learning_rate,
-            logging_steps=10,
-            eval_steps=50,
-            save_steps=100,
+            logging_steps=5,
+            eval_steps=10,
+            save_steps=20,
             eval_strategy="steps",
             save_strategy="steps",
-            load_best_model_at_end=True,
+            load_best_model_at_end=False,  # 禁用以节省内存
             report_to=None,
-            remove_unused_columns=False,
+            remove_unused_columns=True,
             warmup_ratio=0.1,
-            lr_scheduler_type="cosine",
+            lr_scheduler_type="linear",  # 使用更简单的调度器
             optim="adamw_torch",
-            fp16=True if self.device.type == "cuda" else False,
+            fp16=True,
             dataloader_pin_memory=False,
+            gradient_checkpointing=True,  # 启用梯度检查点以节省内存
         )
 
-        # 定义格式化函数（替代 dataset_text_field）
+        # 定义格式化函数
         def formatting_func(example):
             return example["text"]
 
-        # 创建训练器 - 使用新版本的参数
+        # 创建训练器
         trainer = SFTTrainer(
             model=self.model,
             args=training_args,
             train_dataset=Dataset.from_list(train_data),
             eval_dataset=Dataset.from_list(eval_data) if eval_data else None,
-            formatting_func=formatting_func,  # 替代 dataset_text_field
+            formatting_func=formatting_func,
         )
 
         # 开始训练
         print("开始训练...")
-        trainer.train()
+        try:
+            trainer.train()
 
-        # 保存模型和tokenizer
-        trainer.save_model()
+            # 保存模型
+            trainer.save_model()
+            self.tokenizer.save_pretrained(output_dir)
 
-        # 单独保存tokenizer以确保完整性
-        self.tokenizer.save_pretrained(output_dir)
+            print(f"微调完成，模型保存到: {output_dir}")
 
-        print(f"微调完成，模型保存到: {output_dir}")
+        except RuntimeError as e:
+            if "out of memory" in str(e).lower():
+                print("GPU内存不足，尝试CPU训练...")
+                self._finetune_on_cpu(train_data, eval_data, output_dir, num_train_epochs, learning_rate)
+            else:
+                raise e
 
-        # 检查保存的文件
-        if os.path.exists(output_dir):
-            saved_files = os.listdir(output_dir)
-            print(f"保存的文件列表: {saved_files}")
-        else:
-            print(f"警告: 输出目录 {output_dir} 不存在")
-
-        # 清理训练状态，恢复推理模式
+        # 清理训练状态
         self.model = self.model.merge_and_unload()
         torch.cuda.empty_cache()
+
+    def _finetune_on_cpu(self, train_data, eval_data, output_dir, num_train_epochs, learning_rate):
+        """在CPU上进行微调（备用方案）"""
+        print("切换到CPU进行微调...")
+
+        # 将模型移动到CPU
+        self.model = self.model.cpu()
+        self.device = torch.device("cpu")
+
+        # 重新配置训练参数
+        training_args = TrainingArguments(
+            output_dir=output_dir,
+            num_train_epochs=num_train_epochs,
+            per_device_train_batch_size=1,
+            gradient_accumulation_steps=1,
+            learning_rate=learning_rate,
+            logging_steps=5,
+            report_to=None,
+            remove_unused_columns=True,
+            warmup_ratio=0.1,
+            no_cuda=True,  # 强制使用CPU
+        )
+
+        def formatting_func(example):
+            return example["text"]
+
+        trainer = SFTTrainer(
+            model=self.model,
+            args=training_args,
+            train_dataset=Dataset.from_list(train_data),
+            formatting_func=formatting_func,
+        )
+
+        trainer.train()
+        trainer.save_model()
+        self.tokenizer.save_pretrained(output_dir)
+        print(f"CPU微调完成，模型保存到: {output_dir}")
 
 # 使用示例
 if __name__ == "__main__":
